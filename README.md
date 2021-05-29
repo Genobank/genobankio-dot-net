@@ -1,4 +1,6 @@
-# :warning: This is an alpha-quality, technology preview :warning:
+
+
+# :warning: This is a beta-quality, tech preview :warning:
 
 ---
 
@@ -71,3 +73,45 @@ You are welcome to extend the functionality of this example, for example to conn
 * Coding style
   * Basic style for C#: https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/inside-a-program/coding-conventions
 
+# Medicomet / Pasteur C-Sharp Implementation
+
+Need:
+
+* HD Wallet
+* SHA3
+* Ethereum message prefix and signing
+
+C Sharp possible packages
+
+* https://github.com/Nethereum/Nethereum
+  * HD Wallet
+    * This might work http://playground.nethereum.com/csharp/id/1043
+  * How to complie // https://stackoverflow.com/questions/49925484/you-must-add-a-reference-to-assembly-netstandard-version-2-0-0-0 “You must add a reference to assembly”
+  * Getting support / https://github.com/Nethereum/Nethereum/issues/667
+  * Other support / https://discord.com/channels/765580668327034880/770613045827207168/823414319727116308
+
+
+
+Dot Net 101
+
+* MSFT hello world 
+
+* How to add a package / https://stackoverflow.com/questions/43378596/installing-package-with-nuget-in-net-core-on-mac
+
+… 
+
+...
+
+# Log
+
+- :white_check_mark: Created console app / https://dotnet.microsoft.com/learn/dotnet/hello-world-tutorial/install
+- :white_check_mark: run Nethereum example / https://nethereum.readthedocs.io/en/latest/getting-started/
+  - Do NOT use VS Code popup for adding build/test stuff
+- :white_check_mark: Try parts we need for Web3
+  - Need `NBitcoin`
+  - http://playground.nethereum.com/csharp/id/1043
+  - Need `❯ dotnet add package Nethereum.HdWallet     `
+    - Saw this because https://github.com/bethanyuo/nethereum-wallet/blob/89f2e15c4d90986875535a6afb7eeb2c82822bd0/README.md shows it as a separate dependency
+
+* :white_check_mark: Add parts for JSON REST client
+  * https://docs.microsoft.com/en-us/dotnet/csharp/tutorials/console-webapiclient

@@ -1,182 +1,107 @@
 ﻿using System;
-using System.Threading.Tasks;
-using Nethereum.Web3;
 using Nethereum.Util;
 
-using System;
-using System.Numerics;
-using Nethereum.Web3;
-using Nethereum.Web3.Accounts;
-using Nethereum.Util;
-using System.Threading.Tasks;
-using NBitcoin;
-using Nethereum.Hex.HexConvertors.Extensions;
-using Nethereum.HdWallet;
-
-
-
-using System;
-using System.Text;
-using System.Collections.Generic;
-using Nethereum.Util;
-using Nethereum.Signer;
-using Nethereum.Hex.HexConvertors.Extensions;
-
-
-
-// JSON REST Client // https://github.com/dotnet/samples/blob/main/csharp/getting-started/console-webapiclient/Program.cs
-using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text.Json;
-using System.Threading.Tasks;
-
-namespace NethereumSample
+namespace GenoBankIo
 {
     class Program
     {
-        private static readonly HttpClient client = new HttpClient();
-
-        static async Task Main(string[] args)
+        static void Main(string[] args)
         {
-            var repositories = await ProcessRepositories();
-
-            foreach (var repo in repositories)
-            {
-                Console.WriteLine(repo.Name);
-                Console.WriteLine(repo.Description);
-                Console.WriteLine(repo.GitHubHomeUrl);
-                Console.WriteLine(repo.Homepage);
-                Console.WriteLine(repo.Watchers);
-                Console.WriteLine(repo.LastPush);
-                Console.WriteLine();
+            if (args.Length != 9) {
+                Console.Error.WriteLine(args.Length);
+                Console.Error.WriteLine(args);
+                ShowHelp();
+                return;
             }
-        }
 
-        private static async Task<List<Repository>> ProcessRepositories()
-        {
-            client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/vnd.github.v3+json"));
-            client.DefaultRequestHeaders.Add("User-Agent", ".NET Foundation Repository Reporter");
+            Console.Error.WriteLine("Blockchain Lab Results Certification");
+            Console.Error.WriteLine("Java Certification Example, version 1.0");
+            Console.Error.WriteLine("(c) GenoBank.io 🧬");
+            Console.Error.WriteLine();
 
-            var streamTask = client.GetStreamAsync("https://api.github.com/orgs/dotnet/repos");
-            var repositories = await JsonSerializer.DeserializeAsync<List<Repository>>(await streamTask);
-            return repositories;
-        }
+            Network network;
+            switch (args[0]) {
+                case "--test":
+                    Console.Error.WriteLine("Network:     TEST NETWORK");
+                    network = Network.Test();
+                    break;
+                case "--production":
+                    Console.Error.WriteLine("Network:     PRODUCTION NETWORK (BILLABLE)");
+                    network = Network.Production();
+                    break;
+                default:
+                    throw new Exception("You must specify --test or --production network");
+            }
 
-
-
-
-/*        
-        static async Task Main(string[] args)
-        {
-
+            PermitteeSigner signer = new PermitteeSigner(args[1], uint.Parse(args[2]));
+            var pretty = (new AddressUtil()).ConvertToChecksumAddress(signer.credentials.Address);
+            Console.Error.WriteLine("Address:     " + pretty);
             
-            // Try web3 online
-            GetAccountBalance().Wait(); 
+            PermitteeRepresentations representations = new PermitteeRepresentations(
+                network,
+                args[3], // Patient name
+                args[4], // Patient passport
+                new LaboratoryProcedure(args[5]), // Laboratory procedure
+                new LaboratoryProcedure(args[5]).resultWithCode(args[6]),
+                args[7], // Serial
+                DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(args[8])).UtcDateTime, // Time
+                signer.permitteeId // Permittee ID
+            );
 
+            Console.Error.WriteLine("Patient:     " + representations.patientName);
+            Console.Error.WriteLine("Passport:    " + representations.patientPassport);
+            Console.Error.WriteLine("Procedure:   " + representations.procedure.code);
+            Console.Error.WriteLine("Result:      " + representations.result.code);
+            Console.Error.WriteLine("Serial:      " + representations.serial);
+            Console.Error.WriteLine("Time:        " + new DateTimeOffset(representations.time).ToUnixTimeMilliseconds().ToString());
 
-
-            // Try SHA256 ///////////////////////////////////////////////////////////////
-            var hash = Sha3Keccack.Current.CalculateHash("Hello World");
-            Console.WriteLine($"Hash: {hash}");
-
-
-
-            // Try wallet ////////////////////////////////////////////////////////////////
-
-        // This samples shows how to create an HD Wallet using BIP32 standard in Ethereum.
-        // For simpler context, this allows you to recover your accounts and private keys created with a seed set of words
-        // For example Metamask uses 12 words
-        // 
-        //Nethereum uses internally NBitcoin to derive the private and public keys, for more information on BIP32 check
-        //https://programmingblockchain.gitbook.io/programmingblockchain/key_generation/bip_32
-
-        //Initiating a HD Wallet requires a list of words and an optional password to add further entropy (randomness)
-
-        var words = "ripple scissors kick mammal hire column oak again sun offer wealth tomorrow wagon turn fatal";
-        //Note: do not confuse the password with your Metamask password, Metamask password is used to secure the storage
-        var password = "password";
-        var wallet = new Wallet(words, password);
-
-        // An HD Wallet is deterministic, it will derive the same number of addresses 
-        // given the same seed (wordlist + optional password).
-
-        // All the created accounts can be loaded in a Web3 instance and used as any other account, 
-        // we can for instance check the balance of one of them:
-
-        var account = new Wallet(words, password).GetAccount(0);
-        Console.WriteLine("The account address is: " + account.Address);
-
-        var web3 = new Web3(account, "http://testchain.nethereum.com:8545");
-        //we connect to the Nethereum testchain which has already the account preconfigured with some Ether balance.
-        var balance = await web3.Eth.GetBalance.SendRequestAsync(account.Address);
-        Console.WriteLine("The account balance is: " + balance.Value);
-
-        //Or transfer some Ether, as the account already has the private key required to sign the transactions.
-
-        var toAddress = "0x13f022d72158410433cbd66f5dd8bf6d2d129924";
-        var transactionReceipt = await web3.Eth.GetEtherTransferService()
-            .TransferEtherAndWaitForReceiptAsync(toAddress, 2.11m, 2);
-        Console.WriteLine($"Transaction {transactionReceipt.TransactionHash} for amount of 2.11 Ether completed");
-
-
-
-        // Try sign message ////////////////////////////////////////////////////////
-                    
-        //This sample demonstrates how to sign a message with a private key 
-        //and validate the signer later on by recovering the address of the signature.
-
-        //Given an address with a private key
-        var address = "0x94618601FE6cb8912b274E5a00453949A57f8C1e";
-        var privateKey = "0x7580e7fb49df1c861f0050fae31c2224c6aba908e116b8da44ee8cd927b990b0";
-        Console.WriteLine($"Address {address} with private key: {privateKey}");
-
-        //And a message to sign
-        var messageToSign = "wee test message 18/09/2017 02:55PM";
-
-        //We can create an Ethereum signer. 
-        //Note: the EthereumSigner is a specialised signer for messages that prefixes the messages with "x19Ethereum Signed Message:"
-        var signer = new EthereumMessageSigner();
-
-        //To sign a text message we UTF8 encoded it (byte array) first and then sign it
-        var signature = signer.EncodeUTF8AndSign(messageToSign, new EthECKey(privateKey));
-        Console.WriteLine($"Signature: {signature}");
-
-        //To recover the address of the signer of a text message 
-        //we first UTF8 encoded it (byte array) and then using the Elliptic Curve recovery we get the address.
-        var addressRecovered = signer.EncodeUTF8AndEcRecover(messageToSign, signature);
-
-        //We can validate the signature if the address matches
-        Console.WriteLine($"Address recovered: {addressRecovered}");
-
-
-
-
-
-
-
-
-
-
-            Console.ReadLine();
+            byte[] signature = signer.sign(representations);
+            Console.Error.WriteLine("Signature:   0x" + BitConverter.ToString(signature).Replace("-",""));
+            Console.Error.WriteLine();
             
+            Console.Error.WriteLine("Notarizing on blockchain...");
+            Platform platform = new Platform(network, signer);
+            NotarizedCertificate certificate = platform.notarize(representations, signature);
+            Console.Error.WriteLine();
+
+            Console.Error.WriteLine("Certificate URL");
+            Console.WriteLine(certificate.toURL());
         }
 
-        static async Task GetAccountBalance()
+        static void ShowHelp()
         {
-var web3 = new Web3("https://mainnet.infura.io/v3/7238211010344719ad14a89db874158c");
-            var balance = await web3.Eth.GetBalance.SendRequestAsync("0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae");
-            Console.WriteLine($"Balance in Wei: {balance.Value}");
-
-            var etherAmount = Web3.Convert.FromWei(balance.Value);
-            Console.WriteLine($"Balance in Ether: {etherAmount}");
+            Console.WriteLine("Blockchain Lab Results Certification");
+            Console.WriteLine("Java Certification Example, version 1.0");
+            Console.WriteLine("(c) GenoBank.io 🧬");
+            Console.WriteLine();
+            Console.WriteLine("SYNOPSIS");
+            Console.WriteLine("    certificates --test TWELVE_WORD_PHRASE PERMITTEE_ID PATIENT_NAME PATIENT_PASSPORT PROCEDURE_CODE RESULT_CODE SERIAL TIMESTAMP");
+            Console.WriteLine("    certificates --production TWELVE_WORD_PHRASE PERMITTEE_ID PATIENT_NAME PATIENT_PASSPORT PROCEDURE_CODE RESULT_CODE SERIAL TIMESTAMP");
+            Console.WriteLine();
+            Console.WriteLine("DESCRIPTION");
+            Console.WriteLine("    This notarizes a laboratory result using the GenoBank.io platform.");
+            Console.WriteLine("    Running on the production network is billable per your laboratory agreement.");
+            Console.WriteLine();
+            Console.WriteLine("    TWELVE_WORD_PHRASE a space-separated string of your twelve word phrase");
+            Console.WriteLine("    PERMITTEE_ID       your GenoBank.io permittee identifier");
+            Console.WriteLine("    PATIENT_NAME       must match [A-Za-z0-9 .-]+");
+            Console.WriteLine("    PATIENT_PASSPORT   must match [A-Z0-9 -]+");
+            Console.WriteLine("    PROCEDURE_CODE     must be a procedure key in the Laboratory Procedure Taxonomy");
+            Console.WriteLine("    RESULT_CODE        must be a result key in the Laboratory Procedure Taxonomy");
+            Console.WriteLine("    SERIAL             must match [A-Z0-9 -]*");
+            Console.WriteLine("    TIMESTAMP          procedure/sample collection time as number of milliseconds since UNIX epoch");
+            Console.WriteLine();
+            Console.WriteLine("OUTPUT");
+            Console.WriteLine("    A complete URL for the certificate is printed to standard output.");
+            Console.WriteLine("    Please note: you should keep a copy of this output because you paid for it");
+            Console.WriteLine("    and nobody else has a copy or can recreate it for you.");
+            Console.WriteLine();
+            Console.WriteLine("REFERENCES");
+            Console.WriteLine("    Laboratory Procedure Taxonomy (test):");
+            Console.WriteLine("    https://genobank.io/certificates/laboratoryProcedureTaxonomy.json");
+            Console.WriteLine();
+            Console.WriteLine("    Laboratory Procedure Taxonomy (production):");
+            Console.WriteLine("    https://genobank.io/test/certificates/laboratoryProcedureTaxonomy.json");
         }
-*/
     }
-
-
-
 }
