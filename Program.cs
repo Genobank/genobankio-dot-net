@@ -24,13 +24,56 @@ using Nethereum.Hex.HexConvertors.Extensions;
 
 
 
+// JSON REST Client // https://github.com/dotnet/samples/blob/main/csharp/getting-started/console-webapiclient/Program.cs
+using System;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace NethereumSample
 {
     class Program
     {
+        private static readonly HttpClient client = new HttpClient();
+
         static async Task Main(string[] args)
         {
+            var repositories = await ProcessRepositories();
+
+            foreach (var repo in repositories)
+            {
+                Console.WriteLine(repo.Name);
+                Console.WriteLine(repo.Description);
+                Console.WriteLine(repo.GitHubHomeUrl);
+                Console.WriteLine(repo.Homepage);
+                Console.WriteLine(repo.Watchers);
+                Console.WriteLine(repo.LastPush);
+                Console.WriteLine();
+            }
+        }
+
+        private static async Task<List<Repository>> ProcessRepositories()
+        {
+            client.DefaultRequestHeaders.Accept.Clear();
+            client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/vnd.github.v3+json"));
+            client.DefaultRequestHeaders.Add("User-Agent", ".NET Foundation Repository Reporter");
+
+            var streamTask = client.GetStreamAsync("https://api.github.com/orgs/dotnet/repos");
+            var repositories = await JsonSerializer.DeserializeAsync<List<Repository>>(await streamTask);
+            return repositories;
+        }
+
+
+
+
+/*        
+        static async Task Main(string[] args)
+        {
+
+            
             // Try web3 online
             GetAccountBalance().Wait(); 
 
@@ -119,6 +162,7 @@ namespace NethereumSample
 
 
             Console.ReadLine();
+            
         }
 
         static async Task GetAccountBalance()
@@ -130,5 +174,9 @@ var web3 = new Web3("https://mainnet.infura.io/v3/7238211010344719ad14a89db87415
             var etherAmount = Web3.Convert.FromWei(balance.Value);
             Console.WriteLine($"Balance in Ether: {etherAmount}");
         }
+*/
     }
+
+
+
 }
